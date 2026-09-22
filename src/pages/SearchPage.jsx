@@ -84,6 +84,18 @@ export default function SearchPage() {
       </div>
 
       <div className="container">
+        <nav className="breadcrumb" aria-label="Breadcrumb">
+          {lastQuery ? (
+            <>
+              <button type="button" className="bc-link" onClick={() => { clear(); navigate('/') }}>Home</button>
+              <span className="bc-sep">/</span>
+              <span className="bc-current">Search: {lastQuery}</span>
+            </>
+          ) : (
+            <span className="bc-current">Home</span>
+          )}
+        </nav>
+
         <div className="search-box">
           <label htmlFor="main-search">Brand name</label>
           <p className="search-hint-text">

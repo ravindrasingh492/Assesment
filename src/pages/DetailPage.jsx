@@ -142,12 +142,37 @@ export default function DetailPage() {
   return (
     <div>
       <div className="topbar">
+        <span className="topbar-title" style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
+          MediSearch
+        </span>
         <button className="back-btn" onClick={goBack}>
-          ← {fromQuery ? `Results for "${fromQuery}"` : 'Search'}
+          ← {fromQuery ? `Results for "${fromQuery}"` : 'Back to search'}
         </button>
       </div>
 
       <div className="container">
+        <nav className="breadcrumb" aria-label="Breadcrumb">
+          <button type="button" className="bc-link" onClick={() => navigate('/')}>Home</button>
+          <span className="bc-sep">/</span>
+          {fromQuery ? (
+            <>
+              <button type="button" className="bc-link" onClick={goBack}>
+                Search: {fromQuery}
+              </button>
+              <span className="bc-sep">/</span>
+            </>
+          ) : (
+            <>
+              <button type="button" className="bc-link" onClick={() => navigate('/')}>
+                Search
+              </button>
+              <span className="bc-sep">/</span>
+            </>
+          )}
+          <span className="bc-current">
+            {drug ? (getFirst((drug.openfda || {}).brand_name) || decodeURIComponent(brandSlug)) : decodeURIComponent(brandSlug)}
+          </span>
+        </nav>
         {loading && (
           <div className="state-box">
             <p style={{ color: '#888' }}>Loading…</p>

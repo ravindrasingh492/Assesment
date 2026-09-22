@@ -1,37 +1,32 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { getFirst, getAll, formatProductType, clip } from '../drug'
 import { isCached, getCached } from '../cache'
 
-const BASE = 'https://api.fda.gov/drug/label.json'
+const API = 'https://api.fda.gov/drug/label.json'
 
-// loads drug data — either from router state, cache, or a fresh API call
-async function loadDrug(brandSlug, signal) {
-  const decodedBrand = decodeURIComponent(brandSlug)
+async function fetchDrug(slug, signal) {
+  const name = decodeURIComponent(slug)
 
-  // check our search cache first
-  const cacheKey = decodedBrand
-  if (isCached(cacheKey)) {
-    const cached = getCached(cacheKey)
+  if (isCached(name)) {
+    const cached = getCached(name)
     if (cached.length) return { drug: cached[0], error: null }
   }
 
-  // nothing in cache — fetch directly
-  const url = `${BASE}?search=openfda.brand_name:"${encodeURIComponent(decodedBrand)}"&limit=1`
-  const res  = await fetch(url, { signal })
+  const res = await fetch(
+    `${API}?search=openfda.brand_name:"${encodeURIComponent(name)}"&limit=1`,
+    { signal }
+  )
 
   if (res.status === 404) return { drug: null, error: 'not_found' }
-  if (!res.ok)            return { drug: null, error: `HTTP ${res.status}` }
+  if (!res.ok) return { drug: null, error: `HTTP ${res.status}` }
 
   const data = await res.json()
-  const hit  = data?.results?.[0]
-  if (!hit) return { drug: null, error: 'not_found' }
-
-  return { drug: hit, error: null }
+  const hit = data?.results?.[0]
+  return hit ? { drug: hit, error: null } : { drug: null, error: 'not_found' }
 }
 
-// ── Detail row inside the page ─────────────────────────────────────────────
-function InfoRow({ label, value }) {
+function LabelRow({ label, value }) {
   if (!value) return null
   return (
     <div className="detail-row">
@@ -41,50 +36,34 @@ function InfoRow({ label, value }) {
   )
 }
 
-// ── Text section (indications, warnings, etc.) ─────────────────────────────
-function Section({ title, text, variant }) {
-  if (!text) return null
+function LabelSection({ title, content, style }) {
+  if (!content) return null
   return (
     <div className="detail-section">
       <div className="section-title">{title}</div>
-      <div className={`section-text${variant ? ' ' + variant : ''}`}>{text}</div>
+      <div className={style ? `section-text ${style}` : 'section-text'}>{content}</div>
     </div>
   )
 }
 
-// ── The actual detail view ─────────────────────────────────────────────────
 function DrugDetail({ drug }) {
   const fda = drug.openfda || {}
-
-  const brand      = getFirst(fda.brand_name)       || 'Unknown'
-  const generic    = getFirst(fda.generic_name)
-  const mfr        = getAll(fda.manufacturer_name).join('; ')
-  const ptype      = formatProductType(fda.product_type)
-  const routes     = getAll(fda.route).map(r => r.toLowerCase()).join(', ')
+  const brand = getFirst(fda.brand_name) || 'Unknown'
+  const generic = getFirst(fda.generic_name)
+  const ptype = formatProductType(fda.product_type)
+  const routes = getAll(fda.route).map(r => r.toLowerCase()).join(', ')
+  const mfr = getAll(fda.manufacturer_name).join('; ')
   const substances = getAll(fda.substance_name).join(', ')
   const pharmClass = getAll(fda.pharm_class_epc).join('; ')
-  const appNum     = getFirst(fda.application_number)
-  const ndc        = getAll(fda.product_ndc).slice(0, 3).join(', ')
-  const splId      = getFirst(fda.spl_id)
+  const appNum = getFirst(fda.application_number)
+  const ndc = getAll(fda.product_ndc).slice(0, 3).join(', ')
+  const splId = getFirst(fda.spl_id)
 
-  // root-level label sections
-  const sections = [
-    { title: 'Indications & Usage',     key: 'indications_and_usage',    variant: '' },
-    { title: 'Dosage & Administration', key: 'dosage_and_administration', variant: '' },
-    { title: 'Description',             key: 'description',               variant: '' },
-    { title: 'Warnings',                key: 'warnings',                  variant: 'warn' },
-    { title: 'Boxed Warning',           key: 'boxed_warning',             variant: 'warn' },
-    { title: 'Contraindications',       key: 'contraindications',         variant: 'warn' },
-    { title: 'Adverse Reactions',       key: 'adverse_reactions',         variant: 'danger' },
-    { title: 'Drug Interactions',       key: 'drug_interactions',         variant: 'warn' },
-    { title: 'Overdosage',              key: 'overdosage',                variant: 'danger' },
-    { title: 'How Supplied',            key: 'how_supplied',              variant: '' },
-    { title: 'Storage & Handling',      key: 'storage_and_handling',      variant: '' },
-  ]
+  // helper to grab first item from a root-level label field
+  const field = (key) => clip(getFirst(drug[key]), 1200)
 
   return (
     <div>
-      {/* drug header */}
       <div className="detail-header">
         <div className="detail-brand">{brand}</div>
         {generic && <div className="detail-generic">{generic}</div>}
@@ -98,66 +77,62 @@ function DrugDetail({ drug }) {
         </div>
       </div>
 
-      {/* quick info grid */}
       <div className="detail-meta">
-        <InfoRow label="Generic name"           value={generic} />
-        <InfoRow label="Active substances"      value={substances || null} />
-        <InfoRow label="Pharmacological class"  value={pharmClass || null} />
-        <InfoRow label="Manufacturer"           value={mfr || null} />
-        <InfoRow label="Application #"          value={appNum} />
-        <InfoRow label="NDC"                    value={ndc || null} />
-        <InfoRow label="SPL ID"                 value={splId} />
+        <LabelRow label="Generic name" value={generic} />
+        <LabelRow label="Active substances" value={substances || null} />
+        <LabelRow label="Pharmacological class" value={pharmClass || null} />
+        <LabelRow label="Manufacturer" value={mfr || null} />
+        <LabelRow label="Application #" value={appNum} />
+        <LabelRow label="NDC" value={ndc || null} />
+        <LabelRow label="SPL ID" value={splId} />
       </div>
 
-      {/* full label sections */}
       <div className="detail-sections">
-        {sections.map(({ title, key, variant }) => (
-          <Section
-            key={key}
-            title={title}
-            text={clip(getFirst(drug[key]), 1200)}
-            variant={variant}
-          />
-        ))}
+        <LabelSection title="Indications & Usage" content={field('indications_and_usage')} />
+        <LabelSection title="Dosage & Administration" content={field('dosage_and_administration')} />
+        <LabelSection title="Description" content={field('description')} />
+        <LabelSection title="Warnings" content={field('warnings')} style="warn" />
+        <LabelSection title="Boxed Warning" content={field('boxed_warning')} style="warn" />
+        <LabelSection title="Contraindications" content={field('contraindications')} style="warn" />
+        <LabelSection title="Adverse Reactions" content={field('adverse_reactions')} style="danger" />
+        <LabelSection title="Drug Interactions" content={field('drug_interactions')} style="warn" />
+        <LabelSection title="Overdosage" content={field('overdosage')} style="danger" />
+        <LabelSection title="How Supplied" content={field('how_supplied')} />
+        <LabelSection title="Storage & Handling" content={field('storage_and_handling')} />
       </div>
     </div>
   )
 }
 
-// ── Page ───────────────────────────────────────────────────────────────────
 export default function DetailPage() {
-  const { brandSlug }  = useParams()
-  const location       = useLocation()
-  const navigate       = useNavigate()
+  const { brandSlug } = useParams()
+  const location = useLocation()
+  const navigate = useNavigate()
 
-  // drug passed via router state (navigating from search results)
-  const passedDrug     = location.state?.drug ?? null
-  const fromQuery      = location.state?.fromQuery ?? null
+  const passedDrug = location.state?.drug ?? null
+  const fromQuery = location.state?.fromQuery ?? null
 
-  const [drug,    setDrug]    = useState(passedDrug)
+  const [drug, setDrug] = useState(passedDrug)
   const [loading, setLoading] = useState(!passedDrug)
-  const [error,   setError]   = useState(null)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    // already have the drug from router state — no fetch needed
     if (passedDrug) return
 
-    // direct URL access or page refresh — need to fetch
-    const controller = new AbortController()
-
+    const ctrl = new AbortController()
     setLoading(true)
-    loadDrug(brandSlug, controller.signal).then(({ drug: fetched, error: err }) => {
-      setDrug(fetched)
-      setError(err)
+
+    fetchDrug(brandSlug, ctrl.signal).then(({ drug: d, error: e }) => {
+      setDrug(d)
+      setError(e)
       setLoading(false)
     })
 
-    return () => controller.abort()
+    return () => ctrl.abort()
   }, [brandSlug, passedDrug])
 
   function goBack() {
     if (fromQuery) {
-      // go back to search with the original query pre-filled
       navigate(`/?q=${encodeURIComponent(fromQuery)}`)
     } else {
       navigate('/')
@@ -181,22 +156,21 @@ export default function DetailPage() {
 
         {!loading && error === 'not_found' && (
           <div className="state-box">
-            <h3>Medicine not found</h3>
+            <h3>Not found</h3>
             <p>
               Couldn't find a drug label for "{decodeURIComponent(brandSlug)}".
-              This can happen if the brand name doesn't exist in the FDA database,
-              or if it's spelled differently.
+              The brand name might be spelled differently in the FDA database.
             </p>
             <button className="s-btn" onClick={goBack} style={{ marginTop: 8 }}>
-              Go back to search
+              Go back
             </button>
           </div>
         )}
 
         {!loading && error && error !== 'not_found' && (
           <div className="state-box">
-            <h3>Couldn't load this page</h3>
-            <p>API error: <em>{error}</em></p>
+            <h3>Failed to load</h3>
+            <p>Got an error: <em>{error}</em></p>
             <button className="s-btn" onClick={() => window.location.reload()} style={{ marginTop: 8 }}>
               Retry
             </button>

@@ -1,15 +1,13 @@
 import { memo } from 'react'
 import { getFirst, getAll, formatProductType, clip } from '../drug'
 
-// memo so the card only re-renders if its drug prop actually changes
 const DrugCard = memo(function DrugCard({ drug, onClick }) {
   const fda = drug.openfda || {}
-
-  const brand      = getFirst(fda.brand_name)       || 'Unknown'
-  const generic    = getFirst(fda.generic_name)
-  const mfr        = getFirst(fda.manufacturer_name)
-  const ptype      = formatProductType(fda.product_type)
-  const routes     = getAll(fda.route)
+  const brand = getFirst(fda.brand_name) || 'Unknown'
+  const generic = getFirst(fda.generic_name)
+  const mfr = getFirst(fda.manufacturer_name)
+  const ptype = formatProductType(fda.product_type)
+  const routes = getAll(fda.route)
   const substances = getAll(fda.substance_name)
   const pharmClass = getFirst(fda.pharm_class_epc)
 

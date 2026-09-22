@@ -29,23 +29,19 @@
   font-weight: 500;
   color: #2563eb;
   padding: 0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  cursor: pointer;
 }
 
 .back-btn:hover {
   text-decoration: underline;
 }
 
-/* ── layout ─────────────────────────────────────── */
 .container {
   max-width: 880px;
   margin: 0 auto;
   padding: 28px 18px 60px;
 }
 
-/* ── search box ─────────────────────────────────── */
 .search-box {
   background: #fff;
   border: 1px solid #dde1e7;
@@ -148,21 +144,18 @@
 
 .q-clear:hover { background: #fff5f5; }
 
-/* ── result bar ─────────────────────────────────── */
 .result-bar {
   font-size: 13px;
   color: #555;
   margin-bottom: 14px;
 }
 
-/* ── results grid ───────────────────────────────── */
 .results-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
   gap: 12px;
 }
 
-/* ── drug card ──────────────────────────────────── */
 .drug-card {
   background: #fff;
   border: 1px solid #dde1e7;
@@ -280,7 +273,6 @@
   flex-shrink: 0;
 }
 
-/* ── skeleton ───────────────────────────────────── */
 .skel-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
@@ -305,10 +297,9 @@
 
 @keyframes blink {
   from { opacity: 1; }
-  to   { opacity: 0.4; }
+  to { opacity: 0.4; }
 }
 
-/* ── empty / error / idle ───────────────────────── */
 .state-box {
   text-align: center;
   padding: 56px 16px;
@@ -347,7 +338,6 @@
 
 .chips button:hover { background: #eaeaea; }
 
-/* ── idle / intro ───────────────────────────────── */
 .intro-box {
   background: #fff;
   border: 1px solid #dde1e7;
@@ -372,7 +362,6 @@
   line-height: 1.9;
 }
 
-/* ── detail page ────────────────────────────────── */
 .detail-header {
   background: #fff;
   border: 1px solid #dde1e7;
@@ -438,8 +427,6 @@
   gap: 12px;
 }
 
-.detail-section {}
-
 .section-title {
   font-size: 11px;
   font-weight: 700;
@@ -463,7 +450,6 @@
 .section-text.warn   { background: #fffbeb; border-color: #fde68a; color: #92400e; }
 .section-text.danger { background: #fef2f2; border-color: #fecaca; color: #7f1d1d; }
 
-/* ── footer ─────────────────────────────────────── */
 footer {
   text-align: center;
   padding: 22px 16px;
@@ -477,7 +463,6 @@ footer {
 footer a { color: #2563eb; text-decoration: none; }
 footer a:hover { text-decoration: underline; }
 
-/* ── responsive ─────────────────────────────────── */
 @media (max-width: 520px) {
   .input-row { flex-direction: column; }
   .results-grid, .skel-grid { grid-template-columns: 1fr; }
